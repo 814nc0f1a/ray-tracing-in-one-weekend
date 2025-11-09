@@ -1,3 +1,6 @@
+#include "vec3.h"
+#include "color.h"
+
 #include <iostream>
 using namespace std;
 
@@ -13,15 +16,12 @@ int main() {
 		clog << "\nLines remaining: " << (image_h - j) << " " << flush;
 
 		for (int i = 0; i < image_w; i++) {
-			auto r = double(i) / (image_w - 1);
-			auto g = double(j) / (image_h - 1);
-			auto b = 0.0;
-
-			int ir = int(255.999 * r);
-			int ig = int(255.999 * g);
-			int ib = int(255.999 * b);
-
-			cout << ir << " " << ig << " " << ib << "\n";
+			auto pixel_color = color(
+				double(i) / (image_w - 1),
+				double(j) / (image_h - 1),
+				0.0
+			);
+			write_color(cout, pixel_color);
 		}
 	}
 
