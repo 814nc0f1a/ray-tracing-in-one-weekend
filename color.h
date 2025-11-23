@@ -15,7 +15,8 @@ using color = vec3;
     - out: The output stream to write to.
     - pixel_color: The color to write, expressed as a vec3.
 */
-void write_color(ostream &out, const color& pixel_color) {
+void write_color(ostream &out, const color &pixel_color)
+{
     auto r = pixel_color.x();
     auto g = pixel_color.y();
     auto b = pixel_color.z();
