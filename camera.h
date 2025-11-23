@@ -6,8 +6,9 @@
 class camera
 {
 public:
-    double aspect_ratio = 1.0; // Aspect ratio.
-    int image_w = 100;         // Image width in pixels.
+    double aspect_ratio = 1.0;  // Aspect ratio.
+    int image_w = 100;          // Image width in pixels.
+    int samples_per_pixel = 10; // Number of samples per pixel.
 
     /*
         Render the scene from the camera's perspective.
@@ -29,12 +30,15 @@ public:
 
             for (int i = 0; i < image_w; i++)
             {
-                auto pixel_center = pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v);
-                auto ray_direction = pixel_center - camera_center;
-                ray r(camera_center, ray_direction);
+                color pixel_color(0, 0, 0);
 
-                color pixel_color = get_ray_color(r, world);
-                write_color(cout, pixel_color);
+                for (int sample = 0; sample < samples_per_pixel; sample++)
+                {
+                    ray r = get_ray(i, j);
+                    pixel_color += get_ray_color(r, world);
+                }
+
+                write_color(cout, pixel_samples_scale * pixel_color);
             }
         }
 
@@ -42,11 +46,12 @@ public:
     }
 
 private:
-    int image_h;          // Image height in pixels.
-    point3 camera_center; // Camera center point.
-    point3 pixel00_loc;   // Location of pixel (0, 0.)
-    vec3 pixel_delta_u;   // Offset to pixel to the right.
-    vec3 pixel_delta_v;   // Offset to pixel below.
+    int image_h;                // Image height in pixels.
+    double pixel_samples_scale; // Scale factor for pixel color averaging.
+    point3 camera_center;       // Camera center point.
+    point3 pixel00_loc;         // Location of pixel (0, 0.)
+    vec3 pixel_delta_u;         // Offset to pixel to the right.
+    vec3 pixel_delta_v;         // Offset to pixel below.
 
     /*
         Initialize camera parameters.
@@ -55,6 +60,8 @@ private:
     {
         image_h = int(image_w / aspect_ratio);
         image_h = (image_h < 1) ? 1 : image_h;
+
+        pixel_samples_scale = 1.0 / double(samples_per_pixel);
 
         camera_center = point3(0, 0, 0);
 
@@ -69,6 +76,38 @@ private:
         pixel_delta_v = viewport_v / image_h;
         auto viewport_upper_left = camera_center - vec3(0, 0, focal_length) - (viewport_u * 0.5) - (viewport_v * 0.5);
         pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+    }
+
+    /*
+        Generate a ray from the camera through the specified pixel.
+
+        Parameters:
+        - pixel_i: Pixel column index.
+        - pixel_j: Pixel row index.
+
+        Returns:
+        - The generated ray.
+    */
+    ray get_ray(int pixel_i, int pixel_j) const
+    {
+        auto offset = sample_square();
+        auto pixel_sample = pixel00_loc + ((pixel_i + offset.x()) * pixel_delta_u) + ((pixel_j + offset.y()) * pixel_delta_v);
+
+        auto ray_origin = camera_center;
+        auto ray_direction = pixel_sample - camera_center;
+        return ray(ray_origin, ray_direction);
+    }
+
+    /*
+        Return a vector to a random point in the [-0.5, -0.5] - [0.5, 0.5]
+        unit square.
+
+        Returns:
+        - A vec3 representing the sampled point.
+    */
+    vec3 sample_square() const
+    {
+        return vec3(random_double() - 0.5, random_double() - 0.5, 0);
     }
 
     /*
