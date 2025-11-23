@@ -2,8 +2,6 @@
 #define COLOR_H
 
 #include "vec3.h"
-#include <iostream>
-using namespace std;
 
 // color is an alias for vec3. It represents an RGB color.
 using color = vec3;
