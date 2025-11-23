@@ -8,6 +8,22 @@
 using color = vec3;
 
 /*
+    Convert a linear color component to gamma-corrected space.
+
+    Parameters:
+    - linear_component: The linear color component value.
+
+    Returns:
+    - The gamma-corrected color component value.
+*/
+inline double double_to_gamma(double linear_component)
+{
+    if (linear_component > 0)
+        return sqrt(linear_component);
+    return 0;
+}
+
+/*
     Write the color object to the output stream in PPM format.
 
     Parameters:
@@ -19,6 +35,11 @@ void write_color(ostream &out, const color &pixel_color)
     auto r = pixel_color.x();
     auto g = pixel_color.y();
     auto b = pixel_color.z();
+
+    // Apply gamma correction with gamma equal to 2.
+    r = double_to_gamma(r);
+    g = double_to_gamma(g);
+    b = double_to_gamma(b);
 
     // Translate the [0, 1] component value to the byte range [0, 255.]
     static const interval intensity(0.000, 0.999);
