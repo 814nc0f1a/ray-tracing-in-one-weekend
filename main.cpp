@@ -16,16 +16,18 @@ using namespace std;
 	Returns:
 	- true if the ray hits the sphere, false otherwise.
 */
-bool hit_sphere(const point3 &center, double radius, const ray &r)
+double hit_sphere(const point3 &center, double radius, const ray &r)
 {
-	vec3 oc = r.get_origin() - center;
+	vec3 oc = center - r.get_origin();
 
 	auto a = dot(r.get_direction(), r.get_direction());
 	auto b = -2.0 * dot(r.get_direction(), oc);
 	auto c = dot(oc, oc) - radius * radius;
 
 	auto discriminant = b * b - 4 * a * c;
-	return (discriminant > 0);
+	if (discriminant < 0)
+		return -1.0;
+	return (-b - sqrt(discriminant)) / (2.0 * a);
 }
 
 /*
@@ -39,12 +41,14 @@ bool hit_sphere(const point3 &center, double radius, const ray &r)
 */
 color get_ray_color(const ray &r)
 {
-	color start_color(1.0, 0.7, 0.3); // Light orange.
+	color start_color(1.0, 1.0, 1.0); // White.
 	color end_color(0.5, 0.7, 1.0);	  // Light blue.
 
-	if (hit_sphere(point3(0, 0, -1), 0.5, r))
+	auto t = hit_sphere(point3(0, 0, -1), 0.5, r);
+	if (t > 0.0)
 	{
-		return color(1.0, 0.0, 0.0); // Red.
+		vec3 N = unit_vector(r.at(t) - point3(0, 0, -1));
+		return 0.5 * color(N.x() + 1, N.y() + 1, N.z() + 1);
 	}
 
 	vec3 unit_direction = unit_vector(r.get_direction());
