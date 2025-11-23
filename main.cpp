@@ -9,6 +9,7 @@
 
 	Parameters:
 	- r: The ray to trace.
+	- world: The world containing hittable objects.
 
 	Returns:
 	- The color seen along the ray.
