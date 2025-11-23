@@ -1,0 +1,68 @@
+#ifndef MATERIAL_H
+#define MATERIAL_H
+
+#include "hittable.h"
+
+class material
+{
+public:
+    virtual ~material() = default;
+
+    virtual bool scatter(const ray &r_in, const hit_record &rec, color &attenuation, ray &scattered) const
+    {
+        return false;
+    }
+};
+
+class lambertian : public material
+{
+public:
+    lambertian(const color &_albedo)
+    {
+        albedo = _albedo;
+    }
+
+    bool scatter(const ray &r_in, const hit_record &rec, color &attenuation, ray &scattered) const override
+    {
+        auto scatter_direction = rec.normal + random_unit_vector();
+
+        if (scatter_direction.near_zero())
+            // Catch degenerate scatter direction.
+            scatter_direction = rec.normal;
+
+        scattered = ray(rec.p, scatter_direction);
+        attenuation = albedo;
+
+        return true;
+    }
+
+private:
+    color albedo;
+};
+
+class metal : public material
+{
+public:
+    metal(const color &_albedo, double _fuzz = 0.0)
+    {
+        albedo = _albedo;
+        fuzz = _fuzz < 1.0 ? _fuzz : 1.0;
+    }
+
+    bool scatter(const ray &r_in, const hit_record &rec, color &attenuation, ray &scattered) const override
+    {
+        vec3 reflected = reflect(r_in.get_direction(), rec.normal);
+
+        reflected = unit_vector(reflected) + fuzz * random_unit_vector();
+        scattered = ray(rec.p, reflected);
+        attenuation = albedo;
+
+        return (dot(scattered.get_direction(), rec.normal) > 0);
+    }
+
+private:
+    color albedo;
+    double fuzz;
+};
+
+#endif
