@@ -65,4 +65,47 @@ private:
     double fuzz;
 };
 
+class dielectric : public material
+{
+public:
+    dielectric(double _refractive_index)
+    {
+        refractive_index = _refractive_index;
+    }
+
+    bool scatter(const ray &r_in, const hit_record &rec, color &attenuation, ray &scattered) const override
+    {
+        attenuation = color(1.0, 1.0, 1.0);
+        double ri = rec.front_face ? (1.0 / refractive_index) : refractive_index;
+
+        vec3 unit_direction = unit_vector(r_in.get_direction());
+        double cos_theta = fmin(dot(-unit_direction, rec.normal), 1.0);
+        double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
+
+        vec3 direction;
+        bool cannot_refract = ri * sin_theta > 1.0;
+        if (cannot_refract || reflectance(cos_theta, ri) > random_double())
+            direction = reflect(unit_direction, rec.normal);
+        else
+            direction = refract(unit_direction, rec.normal, ri);
+
+        vec3 refracted = refract(unit_direction, rec.normal, ri);
+
+        scattered = ray(rec.p, refracted);
+        return true;
+    }
+
+private:
+    double refractive_index;
+
+    static double reflectance(double cosine, double ref_idx)
+    {
+        // Use Schlick's approximation for reflectance.
+        auto r0 = (1 - ref_idx) / (1 + ref_idx);
+        r0 = r0 * r0;
+
+        return r0 + (1 - r0) * pow((1 - cosine), 5);
+    }
+};
+
 #endif
