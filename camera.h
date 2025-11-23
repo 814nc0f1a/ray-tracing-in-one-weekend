@@ -9,6 +9,7 @@ public:
     double aspect_ratio = 1.0;  // Aspect ratio.
     int image_w = 100;          // Image width in pixels.
     int samples_per_pixel = 10; // Number of samples per pixel.
+    int max_depth = 10;         // Maximum number of ray bounces into scene.
 
     /*
         Render the scene from the camera's perspective.
@@ -35,7 +36,7 @@ public:
                 for (int sample = 0; sample < samples_per_pixel; sample++)
                 {
                     ray r = get_ray(i, j);
-                    pixel_color += get_ray_color(r, world);
+                    pixel_color += get_ray_color(r, max_depth, world);
                 }
 
                 write_color(cout, pixel_samples_scale * pixel_color);
@@ -115,21 +116,26 @@ private:
 
         Parameters:
         - r: The ray to trace.
+        - depth: The maximum number of ray bounces allowed.
         - world: The world containing hittable objects.
 
         Returns:
         - The color seen along the ray.
     */
-    color get_ray_color(const ray &r, const hittable &world)
+    color get_ray_color(const ray &r, int depth, const hittable &world) const
     {
+        if (depth <= 0)
+            return color(0, 0, 0);
+
         hit_record rec;
 
         color start_color(1.0, 1.0, 1.0); // White.
         color end_color(0.5, 0.7, 1.0);   // Light blue.
 
-        if (world.hit(r, interval(0, infinity), rec))
+        if (world.hit(r, interval(0.001, infinity), rec))
         {
-            return 0.5 * (rec.normal + start_color);
+            vec3 direction = random_on_hemisphere(rec.normal);
+            return 0.5 * get_ray_color(ray(rec.p, direction), depth - 1, world);
         }
 
         vec3 unit_direction = unit_vector(r.get_direction());
