@@ -89,9 +89,7 @@ public:
         else
             direction = refract(unit_direction, rec.normal, ri);
 
-        vec3 refracted = refract(unit_direction, rec.normal, ri);
-
-        scattered = ray(rec.p, refracted);
+        scattered = ray(rec.p, direction);
         return true;
     }
 
