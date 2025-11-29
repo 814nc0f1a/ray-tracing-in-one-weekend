@@ -12,6 +12,11 @@ public:
     int samples_per_pixel = 10; // Number of samples per pixel.
     int max_depth = 10;         // Maximum number of ray bounces into scene.
 
+    double vfov = 90.0;                // Vertical view angle (field of view.)
+    point3 lookfrom = point3(0, 0, 0); // Point camera is looking from.
+    point3 lookat = point3(0, 0, -1);  // Point camera is looking at.
+    vec3 vup = vec3(0, 1, 0);          // Camera-relative "up" direction.
+
     /*
         Render the scene from the camera's perspective.
 
@@ -22,7 +27,6 @@ public:
     {
         inizialize();
 
-        // Render.
         cout << "P3\n"
              << image_w << " " << image_h << "\n255\n";
 
@@ -54,6 +58,7 @@ private:
     point3 pixel00_loc;         // Location of pixel (0, 0.)
     vec3 pixel_delta_u;         // Offset to pixel to the right.
     vec3 pixel_delta_v;         // Offset to pixel below.
+    vec3 u, v, w;               // Camera frame basis vectors.
 
     /*
         Initialize camera parameters.
@@ -65,18 +70,28 @@ private:
 
         pixel_samples_scale = 1.0 / double(samples_per_pixel);
 
-        camera_center = point3(0, 0, 0);
+        camera_center = lookfrom;
 
         // Viewport definition.
-        auto focal_length = 1.0;
-        auto viewport_h = 2.0;
+        auto focal_length = (lookfrom - lookat).length();
+
+        auto theta = degrees_to_radians(vfov);
+        auto h = tan(theta / 2);
+
+        auto viewport_h = 2 * h * focal_length;
         auto viewport_w = viewport_h * (double(image_w) / image_h);
-        auto viewport_u = vec3(viewport_w, 0, 0);
-        auto viewport_v = vec3(0, -viewport_h, 0);
+
+        w = unit_vector(lookfrom - lookat);
+        u = unit_vector(cross(vup, w));
+        v = cross(w, u);
+
+        vec3 viewport_u = viewport_w * u;
+        vec3 viewport_v = viewport_h * -v;
 
         pixel_delta_u = viewport_u / image_w;
         pixel_delta_v = viewport_v / image_h;
-        auto viewport_upper_left = camera_center - vec3(0, 0, focal_length) - (viewport_u * 0.5) - (viewport_v * 0.5);
+
+        auto viewport_upper_left = camera_center - (focal_length * w) - (0.5 * viewport_u) - (0.5 * viewport_v);
         pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
     }
 
